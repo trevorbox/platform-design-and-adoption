@@ -72,10 +72,10 @@ The following are a list of platform services that should be consumable by [stre
         name: small
       spec:
         hard:
-        requests.cpu: '2'   
-        requests.memory: 4Gi
-        limits.ephemeral-storage: 10Gi
-        requests.ephemeral-storage: 10Gi
+          requests.cpu: '2'   
+          requests.memory: 4Gi
+          limits.ephemeral-storage: 10Gi
+          requests.ephemeral-storage: 10Gi
       ```
 
     * LimitRange changes. These typically should have default requests including cpu and memory since we require them in the ResourceQuotas. It is also a good idea to enforce default ephemeral storage requests and limits to protect worker nodes from applications that should be using persistent storage instead. For example:
@@ -87,13 +87,13 @@ The following are a list of platform services that should be consumable by [stre
         name: defaults
       spec:
         limits:
-        - type: Container
+          - type: Container
             default:
-            ephemeral-storage: 100Mi
+              ephemeral-storage: 100Mi
             defaultRequest:
-            cpu: 10m
-            ephemeral-storage: 100Mi
-            memory: 64Mi
+              cpu: 10m
+              ephemeral-storage: 100Mi
+              memory: 64Mi
       ```
 
     * Namespace labels/annotation updates
