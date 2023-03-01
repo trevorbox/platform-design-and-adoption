@@ -2,6 +2,17 @@
 
 Considerations for container platforms and their adoption.
 
+## Contents
+
+1. [Intro](#intro)
+2. [Platform Services](#platform-services)
+3. [Team Structure & Dynamics](#team-structure--dynamics)
+4. [Container Development](#container-development)
+5. [Pipelines](#pipelines)
+6. [GitOps](#gitops)
+7. [Service Mesh](#service-mesh)
+8. [Appendix](#appendix)
+
 ## Intro
 
 Creating a modern platform for building, running and managing applications comes with a plethora of design decisions and component choices. It can be daunting and, frankly, hard to imagine where to start.
@@ -280,7 +291,7 @@ The following are a list of platform services that should be consumable by [stre
   * Open Policy Agent
   * Kyverno
 
-## Team Structure/Team Dynamics
+## Team Structure & Dynamics
 
 Clearly define what applications should run in which namespaces and who should have what level of access to them (roles). As mentioned in the Group Naming Convention section above, team structures should directly influence the platform’s multi-tenancy requirements regarding Namespace and Group naming conventions. In that example, the namespace naming convention proposed was &lt;org>-&lt;context>-&lt;env>. Let's dive in a bit further to what is meant by organization, context, and environment.
 
