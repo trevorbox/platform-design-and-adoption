@@ -65,35 +65,37 @@ The following are a list of platform services that should be consumable by [stre
     * Quotas are important for limiting and sizing the expected maximum amount of resources required in a cluster. A cluster-admin should come up with a general baseline of available cluster Nodes to match the cumulative Quotas among all namespaces (or implement node autoscaling strategies). As such, a general quota “t-shirt size” option may be helpful when planning for namespace creation, such as small, medium, and large.
     * A good practice is to only have “hard resources requests” for cpu and memory (not resource limits) in ResourceQuotas. However, ephemeral storage should have both requests and limits. Although not required by the quota, applications should still consider using resource limits for memory since this is not “[compressible](https://kubernetes.io/blog/2021/11/26/qos-memory-resources/)”. See [How Full is My Cluster - Part 2: Protecting the Nodes](https://cloud.redhat.com/blog/full-cluster-part-2-protecting-nodes) for more explanation. For example:
 
-            ```
-            kind: ResourceQuota
-            apiVersion: v1
-            metadata:
-                name: small
-            spec:
-                hard:
-                requests.cpu: '2'   
-                requests.memory: 4Gi
-                limits.ephemeral-storage: 10Gi
-                requests.ephemeral-storage: 10Gi
-            ```
+      ```yaml
+      kind: ResourceQuota
+      apiVersion: v1
+      metadata:
+        name: small
+      spec:
+        hard:
+        requests.cpu: '2'   
+        requests.memory: 4Gi
+        limits.ephemeral-storage: 10Gi
+        requests.ephemeral-storage: 10Gi
+      ```
+
     * LimitRange changes. These typically should have default requests including cpu and memory since we require them in the ResourceQuotas. It is also a good idea to enforce default ephemeral storage requests and limits to protect worker nodes from applications that should be using persistent storage instead. For example:
 
-            ```
-            kind: LimitRange
-            apiVersion: v1
-            metadata:
-             name: defaults
-            spec:
-             limits:
-               - type: Container
-                 default:
-                   ephemeral-storage: 100Mi
-                 defaultRequest:
-                   cpu: 10m
-                   ephemeral-storage: 100Mi
-                   memory: 64Mi
-            ```
+      ```yaml
+      kind: LimitRange
+      apiVersion: v1
+      metadata:
+        name: defaults
+      spec:
+        limits:
+        - type: Container
+            default:
+            ephemeral-storage: 100Mi
+            defaultRequest:
+            cpu: 10m
+            ephemeral-storage: 100Mi
+            memory: 64Mi
+      ```
+
     * Namespace labels/annotation updates
     * Default Network Policies
       * For improved security, it is typical to isolate pod communication by denying all traffic except from pods within the same namespace or the ingress controller
@@ -415,8 +417,8 @@ If using Helm, an easy starting point for creating IAC to deploy a new applicati
 
 Building and running applications using containers is ideal since they provide the ability to encapsulate and standardize build and runtime processes for similar application types. The following recommendations should be considered regarding base images:
 
-* Use [multi-stage](https://docs.docker.com/develop/develop-images/multistage-build/) Dockerfile/Containerfile builds for minimizing image sizes. 
-* Use [Source-To-Image](https://github.com/openshift/source-to-image#overview) (S2I) builder images to make the build process more standardized. The built binaries can then be copied into smaller runtime base images. 
+* Use [multi-stage](https://docs.docker.com/develop/develop-images/multistage-build/) Dockerfile/Containerfile builds for minimizing image sizes.
+* Use [Source-To-Image](https://github.com/openshift/source-to-image#overview) (S2I) builder images to make the build process more standardized. The built binaries can then be copied into smaller runtime base images.
 * Consider always building using the “latest” base image tag to get vulnerability patches regularly. Base image names (not tags) typically correspond to major releases of an application runtime that hopefully do not cause breaking changes.
 * Consider automating image builds whenever a new latest tag is available (and run your applications automated tests afterwards). This can be done using ImageStreams in Openshift combined with [BuildConfig triggers on image change](https://docs.openshift.com/container-platform/4.10/cicd/builds/triggering-builds-build-hooks.html#builds-using-image-change-triggers_triggering-builds-build-hooks) and then [setting triggers](https://docs.openshift.com/container-platform/4.10/openshift_images/triggering-updates-on-imagestream-changes.html#images-triggering-updates-imagestream-changes-kubernetes-cli_triggering-updates-on-imagestream-changes) on kubernetes resources such as a Deployment.
 * Use stable (or, better yet, supported) base images. This is a fairly arbitrary statement but a good indication of stability is how often new versions of a base image are released.
@@ -436,12 +438,14 @@ Below is an example [Red Hat Universal Base Image (UBI)](https://developers.redh
 ### OpenShift Image Build Guidelines
 
 * To address vulnerabilities with the container engine, OpenShift will run containers using arbitrary user ids that belong to the root group, thus directories and files the application/process needs should belong to the root group. Also consider building images that provide compatibility when running on plain kubernetes and default to run as a non-root user id. S2I image builds typically take care of these concerns, but using multi-stage builds requires Dockerfile user permissions considerations. For example:
-    ```text
-    USER 0
-    RUN chown -R 1001:0 /some/directory && \
-        chmod -R g=u /some/directory
-    USER 1001
-    ```
+
+  ```text
+  USER 0
+  RUN chown -R 1001:0 /some/directory && \
+      chmod -R g=u /some/directory
+  USER 1001
+  ```
+
 * Containers cannot use privileged ports 1-1023 since these require root privileges to bind too
 * Review [Adapting Docker and Kubernetes containers to run on Red Hat OpenShift Container Platform](https://developers.redhat.com/blog/2020/10/26/adapting-docker-and-kubernetes-containers-to-run-on-red-hat-openshift-container-platform) for other important considerations with building and running containers on OpenShift
 
@@ -454,7 +458,7 @@ Developers need a quick feedback loop when writing Dockerfiles or Containerfiles
   * This is by far the quickest solution
 * Virtual Machines with podman or Docker that developers can shell into
   * Perhaps a RHEL VM that many devs can log into
-  * VSCode’s Remote SSH capability gives the same developer experience as workstation builds in the IDE see [https://code.visualstudio.com/docs/containers/ssh](https://code.visualstudio.com/docs/containers/ssh) 
+  * VSCode’s Remote SSH capability gives the same developer experience as workstation builds in the IDE see [https://code.visualstudio.com/docs/containers/ssh](https://code.visualstudio.com/docs/containers/ssh)
 * OpenShift Builds
   * Typically useful to enable the internal OpenShift Registry as well
   * OpenShift builds run privileged pods to build images, but in a controlled manner (no arbitrary buildah commands permitted)
