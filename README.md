@@ -595,7 +595,9 @@ Some GitOps tools also provide pipeline/CI processes, for example ArgoCd Workflo
 
 The [App of Apps pattern](https://argo-cd.readthedocs.io/en/stable/operator-manual/cluster-bootstrapping/#app-of-apps-pattern) consists of a single ArgoCD “root” Application (“root app”) which can be manually created once per cluster for a bounded context to automatically create and sync one or more child ArgoCD Applications. This approach greatly simplifies deployment processes since configurations for child application deployments are entirely controlled as code using Git processes. Developers only need to worry about changing IAC code in Git instead of having to remember to run a pipeline or deployment command with each change.
 
-ApplicationSets may also be utilized for this purpose and has the added benefit of deploying the same App or root app to many clusters and/or namespaces. The [Git Generator](https://argocd-applicationset.readthedocs.io/en/stable/Generators-Git/) is likely the more flexible approach for generating Apps and can be clearly defined based on a simple folder/file structure in an IAC repository. A [webhook](https://argocd-applicationset.readthedocs.io/en/stable/Generators-Git/#webhook-configuration) can be used to force the ApplicationSet Controller to reconcile on commits. Developers should be able to access the ApplicationSet controller logs for debugging purposes.
+ApplicationSets may also be utilized for this purpose and can deploy the same App to many clusters and/or namespaces, determined by the generator strategy. The [Git Generator](https://argocd-applicationset.readthedocs.io/en/stable/Generators-Git/) is likely the more flexible approach for generating Apps and can be defined based on a simple folder/file structure in an IAC repository. Additionally, a [webhook](https://argocd-applicationset.readthedocs.io/en/stable/Generators-Git/#webhook-configuration) can be used to force the ApplicationSet Controller to reconcile on commits. Developers should be able to access the ApplicationSet controller logs for debugging purposes.
+
+Review the [ApplicationSet Use Cases](https://argo-cd.readthedocs.io/en/stable/operator-manual/applicationset/Use-Cases/#use-cases-supported-by-the-applicationset-controller) to determine what strategy best fits your needs.
 
 ### GitOps Strategy
 
@@ -605,43 +607,66 @@ Below is an example diagram of how to implement a standardized GitOps strategy f
 
 The first row depicts different OpenShift/Kubernetes cluster types. The clusters and operators that allow stream-aligned teams to provision ArgoCD and Tekton controllers are provided by a platform team responsible for the clusters.
 
-The second row depicts two different Git repositories which a stream-aligned team will maintain. Application source code and infrastructure as code (IAC) is separated to prevent unnecessary source code build pipeline events triggered by Git commits when only IAC configuration changes are required. The IAC Git repository holds configuration code for all Namespaces across all clusters. Within it are several different folders to separate uniquely deployable components for ArgoCD, Pipelines and application deployment code. There should be a chart for the ArgoCD root application (“root app”) or ApplicationSet which can create one or more ArgoCD Applications across Namespaces/Clusters. The “root app” or ApplicationSet needs to be manually deployed in each cluster, or to the central (external) GitOps hub cluster depending on the multi-cluster configuration. \
-
-Notice the example folder structure in the bounded context’s IAC repo. It has the ArgoCD “root app” and “app” folders which hold cluster-specific parameter files that, when deployed, configure child ArgoCD Applications to sync namespace-specific parameters files in the deploy folder. See the appendix section for further examples.
-
-```sh
-$ tree -L 4 appofapps/
-appofapps/
-├── argocd
-│   └── helm
-│       ├── app
-│       │   ├── Chart.yaml
-│       │   ├── templates
-│       │   ├── values-cluster-dev.yaml
-│       │   ├── values-cluster-prod.yaml
-│       │   ├── values-cluster-stage.yaml
-│       │   └── values.yaml
-│       └── rootapp
-│           ├── Chart.yaml
-│           ├── templates
-│           ├── values-cluster-dev.yaml
-│           ├── values-cluster-prod.yaml
-│           ├── values-cluster-stage.yaml
-│           └── values.yaml
-├── deploy
-│   └── helm
-│       └── app
-│           ├── Chart.yaml
-│           ├── templates
-│           ├── values-build.yaml
-│           ├── values-dev.yaml
-│           ├── values-perf.yaml
-│           ├── values-prod.yaml
-│           ├── values-qa.yaml
-│           └── values.yaml
-```
+The second row depicts two different Git repositories which a stream-aligned team will maintain. Application source code and infrastructure as code (IAC) is separated to prevent unnecessary source code build pipeline events triggered by Git commits when only IAC configuration changes are required. The IAC Git repository holds configuration code for all Namespaces across all clusters. Within it are several different folders to separate uniquely deployable components for ArgoCD, Pipelines and application deployment code. There should be a chart for the ArgoCD ApplicationSet (or root application “root app”) which can create one or more ArgoCD Applications across Namespaces/Clusters. The ApplicationSet or "root app" needs to be manually deployed in each cluster, or central (external) GitOps hub cluster depending on the multi-cluster configuration.
 
 The final row in the previous picture shows template repos for Application source code and IAC repo that are copied by stream-aligned teams. These template repos are maintained by a long-lived platform team for the purpose of standardizing and quickly onboarding new application types. There may also be common charts for IAC repos to depend on which are maintained by a platform team (for example, standardized pipeline charts) providing a supported “[Golden Path](https://cloud.redhat.com/blog/designing-golden-paths)” for building applications, without preventing developers from implementing their own custom solutions.
+
+An example folder structure is provided below; demonstrating a possible bounded context’s IAC repo structure. This example follows the [self-service](https://argo-cd.readthedocs.io/en/stable/operator-manual/applicationset/Use-Cases/#use-case-self-service-of-argo-cd-applications-on-multitenant-clusters) use case for running applications on multitenant clusters. The ArgoCD _applicationset_ provides the "root app” functionality, and is extensible to deploy the same application to multiple namespaces/clusters using the [Generators-Git](https://argocd-applicationset.readthedocs.io/en/stable/Generators-Git/) approach from configuration files in the _clusters_ folder. The _deploy_ folder is the helm chart to deploy the application. See the appendix section for a link to the example IAC repo.
+
+The GitOps code to deploy the ArgoCD ApplicationSet and [Generators-Git](https://argocd-applicationset.readthedocs.io/en/stable/Generators-Git/) cluster config files (deployed as a helm chart)...
+
+```sh
+[tbox@fedora gitops-example-iac-go]$ tree -L 4 ./argocd/
+./argocd/
+├── clusters
+│   ├── dev
+│   │   └── namespaces
+│   │       ├── build.yaml
+│   │       └── dev.yaml
+│   ├── prod
+│   │   └── namespaces
+│   │       └── prod.yaml
+│   └── stage
+│       └── namespaces
+│           ├── perf.yaml
+│           └── qa.yaml
+└── helm
+    └── applicationset
+        ├── Chart.yaml
+        ├── templates
+        │   ├── applicationset.yaml
+        │   └── _helpers.tpl
+        ├── values-cluster-dev.yaml
+        ├── values-cluster-prod.yaml
+        ├── values-cluster-stage.yaml
+        └── values.yaml
+```
+
+The helm chart of the application IAC...
+
+```sh
+[tbox@fedora gitops-example-iac-go]$ tree -L 4 ./deploy/
+./deploy/
+└── helm
+    └── app
+        ├── Chart.yaml
+        ├── templates
+        │   ├── deployment-or-rollout.yaml
+        │   ├── _helpers.tpl
+        │   ├── hpa.yaml
+        │   ├── ingress.yaml
+        │   ├── NOTES.txt
+        │   ├── rollout
+        │   ├── serviceaccount.yaml
+        │   ├── service.yaml
+        │   └── tests
+        ├── values-build.yaml
+        ├── values-dev.yaml
+        ├── values-perf.yaml
+        ├── values-prod.yaml
+        ├── values-qa.yaml
+        └── values.yaml
+```
 
 ### GitOps Branching Models
 
