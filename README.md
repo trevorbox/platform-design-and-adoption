@@ -601,6 +601,12 @@ Review the [ApplicationSet Use Cases](https://argo-cd.readthedocs.io/en/stable/o
 
 ### GitOps Strategy
 
+#### Use case 1: Monorepo Model
+
+![iac monorepo model](images/monorepo.png)
+
+#### Use case 2: 
+
 Below is an example diagram of how to implement a standardized GitOps strategy for many stream-aligned teams to follow. It shows the relationships between different teams and components for creating a repeatable pattern for GitOps.
 
 ![gitops strategy](images/gitops-strategy.png "gitops strategy")
@@ -668,13 +674,13 @@ The helm chart of the application IAC...
         └── values.yaml
 ```
 
-### GitOps Branching Models
+##### Branching Models
 
-#### Application Source Code Repository
+###### Application Source Code Repository
 
 The Application source code repository typically uses a [Gitflow](https://www.atlassian.com/git/tutorials/comparing-workflows/gitflow-workflow) branching model. Automated pipeline builds can occur when commits occur on a release branch. Manual builds on feature branch commits can also be automated. After a release is deployed to production, merge the release branch to main.
 
-#### IAC Repository
+###### IAC Repository
 
 Goals:
 
