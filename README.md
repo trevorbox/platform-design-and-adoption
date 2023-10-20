@@ -601,13 +601,17 @@ Review the [ApplicationSet Use Cases](https://argo-cd.readthedocs.io/en/stable/o
 
 ### GitOps Strategy
 
-#### Use case 1: Monorepo Model
+#### Use case 1: Central Monorepo Model
+
+If separation of duties is needed (a process to review and approve changes by a third party operations team) before allowing changes to deployed code in SDLC environments, a separate Git monorepo may be advantageous.
+
+See the example [gitops-example-iac-argocd-apps](https://github.com/trevorbox/gitops-example-iac-argocd-apps/tree/main#gitops-example-iac-argocd-apps) for more details on the assumptions and pattern of this model.
 
 ![iac monorepo model](images/monorepo.png)
 
-#### Use case 2: 
+#### Use case 2: Stream aligned
 
-Below is an example diagram of how to implement a standardized GitOps strategy for many stream-aligned teams to follow. It shows the relationships between different teams and components for creating a repeatable pattern for GitOps.
+Below is an example diagram of how to implement a standardized GitOps strategy for many stream-aligned teams to follow. It shows the relationships between different teams and components for creating a repeatable pattern for GitOps. With this strategy a stream aligned team is able to control deployments into any SDLC environment.
 
 ![gitops strategy](images/gitops-strategy.png "gitops strategy")
 
@@ -674,13 +678,15 @@ The helm chart of the application IAC...
         └── values.yaml
 ```
 
-##### Branching Models
+#### Branching Models
 
-###### Application Source Code Repository
+##### Application Source Code Repository
 
 The Application source code repository typically uses a [Gitflow](https://www.atlassian.com/git/tutorials/comparing-workflows/gitflow-workflow) branching model. Automated pipeline builds can occur when commits occur on a release branch. Manual builds on feature branch commits can also be automated. After a release is deployed to production, merge the release branch to main.
 
-###### IAC Repository
+##### IAC Repository
+
+> Note: this is applicable to Use Case 2.
 
 Goals:
 
